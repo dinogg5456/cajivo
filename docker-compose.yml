@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    container_name: inventienda-db
+    environment:
+      POSTGRES_DB: inventienda
+      POSTGRES_USER: inventienda
+      POSTGRES_PASSWORD: inventienda
+    ports:
+      - "5432:5432"
+    volumes:
+      - inventienda-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventienda -d inventienda"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: inventienda-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: inventienda
+      DB_USER: inventienda
+      DB_PASSWORD: inventienda
+    ports:
+      - "8080:8080"
+
+volumes:
+  inventienda-data:
