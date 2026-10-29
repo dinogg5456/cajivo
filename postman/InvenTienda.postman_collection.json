@@ -1,0 +1,176 @@
+{
+  "info": {
+    "name": "InvenTienda API",
+    "description": "Pruebas funcionales del servicio REST. Ejecutar en orden con el Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "categoriaId", "value": "" },
+    { "key": "proveedorId", "value": "" },
+    { "key": "clienteId", "value": "" },
+    { "key": "productoId", "value": "" },
+    { "key": "ventaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 Crear categoría",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 201', () => pm.response.to.have.status(201));",
+        "pm.collectionVariables.set('categoriaId', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Granos {{$timestamp}}\",\n  \"descripcion\": \"Arroz, frijol, lentejas\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/categorias", "host": ["{{baseUrl}}"], "path": ["api", "v1", "categorias"] }
+      }
+    },
+    {
+      "name": "02 Crear proveedor",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 201', () => pm.response.to.have.status(201));",
+        "pm.collectionVariables.set('proveedorId', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Distribuidora La Esperanza\",\n  \"telefono\": \"3001234567\",\n  \"email\": \"ventas@laesperanza.example\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/proveedores", "host": ["{{baseUrl}}"], "path": ["api", "v1", "proveedores"] }
+      }
+    },
+    {
+      "name": "03 Crear cliente",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 201', () => pm.response.to.have.status(201));",
+        "pm.collectionVariables.set('clienteId', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"documento\": \"{{$timestamp}}\",\n  \"nombre\": \"María Pérez\",\n  \"telefono\": \"3109876543\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/clientes", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes"] }
+      }
+    },
+    {
+      "name": "04 Crear producto",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 201', () => pm.response.to.have.status(201));",
+        "pm.test('Stock inicial 20', () => pm.expect(pm.response.json().stock).to.eql(20));",
+        "pm.collectionVariables.set('productoId', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"codigo\": \"ARR-{{$timestamp}}\",\n  \"nombre\": \"Arroz 1kg\",\n  \"precio\": 2500.00,\n  \"stock\": 20,\n  \"stockMinimo\": 5,\n  \"categoriaId\": {{categoriaId}},\n  \"proveedorId\": {{proveedorId}}\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/productos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos"] }
+      }
+    },
+    {
+      "name": "05 Crear producto con precio inválido (400)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 400', () => pm.response.to.have.status(400));",
+        "pm.test('Trae detalles del error', () => pm.expect(pm.response.json().detalles.length).to.be.above(0));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"codigo\": \"MAL-001\",\n  \"nombre\": \"Producto con precio cero\",\n  \"precio\": 0,\n  \"stock\": 1,\n  \"stockMinimo\": 0,\n  \"categoriaId\": {{categoriaId}}\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/productos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos"] }
+      }
+    },
+    {
+      "name": "06 Registrar venta de 4 unidades",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 201', () => pm.response.to.have.status(201));",
+        "pm.test('Total 10000', () => pm.expect(pm.response.json().total).to.eql(10000));",
+        "pm.collectionVariables.set('ventaId', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"clienteId\": {{clienteId}},\n  \"items\": [\n    { \"productoId\": {{productoId}}, \"cantidad\": 4 }\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/ventas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "ventas"] }
+      }
+    },
+    {
+      "name": "07 Verificar stock descontado (16)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 200', () => pm.response.to.have.status(200));",
+        "pm.test('Stock 16', () => pm.expect(pm.response.json().stock).to.eql(16));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "{{productoId}}"] }
+      }
+    },
+    {
+      "name": "08 Venta con stock insuficiente (422)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 422', () => pm.response.to.have.status(422));",
+        "pm.test('Mensaje de stock', () => pm.expect(pm.response.json().mensaje).to.include('Stock insuficiente'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"items\": [\n    { \"productoId\": {{productoId}}, \"cantidad\": 500 }\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/ventas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "ventas"] }
+      }
+    },
+    {
+      "name": "09 Anular la venta",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 200', () => pm.response.to.have.status(200));",
+        "pm.test('Venta anulada', () => pm.expect(pm.response.json().estado).to.eql('ANULADA'));"
+      ] } }],
+      "request": {
+        "method": "PATCH",
+        "url": { "raw": "{{baseUrl}}/api/v1/ventas/{{ventaId}}/anular", "host": ["{{baseUrl}}"], "path": ["api", "v1", "ventas", "{{ventaId}}", "anular"] }
+      }
+    },
+    {
+      "name": "10 Anular otra vez (422)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 422', () => pm.response.to.have.status(422));"
+      ] } }],
+      "request": {
+        "method": "PATCH",
+        "url": { "raw": "{{baseUrl}}/api/v1/ventas/{{ventaId}}/anular", "host": ["{{baseUrl}}"], "path": ["api", "v1", "ventas", "{{ventaId}}", "anular"] }
+      }
+    },
+    {
+      "name": "11 Reponer inventario",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 200', () => pm.response.to.have.status(200));",
+        "pm.test('Stock 30', () => pm.expect(pm.response.json().stock).to.eql(30));"
+      ] } }],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{ \"cantidad\": 10 }" },
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}/reposicion", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "{{productoId}}", "reposicion"] }
+      }
+    },
+    {
+      "name": "12 Consultar productos con stock bajo",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 200', () => pm.response.to.have.status(200));",
+        "pm.test('Respuesta es un arreglo', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/bajo-stock", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "bajo-stock"] }
+      }
+    },
+    {
+      "name": "13 Producto inexistente (404)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Estado 404', () => pm.response.to.have.status(404));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/999999", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "999999"] }
+      }
+    }
+  ]
+}
